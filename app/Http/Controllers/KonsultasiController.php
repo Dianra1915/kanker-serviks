@@ -18,9 +18,9 @@ class KonsultasiController extends Controller {
     // Skala dinamis agar mudah diubah jika ada instruksi dosen
     $skala = [
         '1.0' => 'Sangat Yakin',
-        '0.6' => 'Yakin',
-        '0.3' => 'Sedikit Yakin',
-        '0'   => 'Tidak Yakin'
+        '0.8' => 'Yakin',
+        '0.6' => 'Cukup Yakin',
+        '0.4' => 'Kurang Yakin'
     ];
 
     return view('konsultasi.index', compact('gejalas', 'skala'));
@@ -28,62 +28,109 @@ class KonsultasiController extends Controller {
 
     public function prosesDiagnosa(Request $request) {
         $jawabanUser = $request->jawaban ?? []; // Berisi [gejala_id => nilai_cf]
-        if (empty($jawabanUser)) {
-            return redirect()->back()->with('error', 'Silakan pilih minimal satu gejala.');
+
+        // Ambil ID gejala yang dipilih (yang nilainya di atas 0)
+        $gejalaTerpilih = [];
+        foreach ($jawabanUser as $gejalaId => $nilaiCf) {
+            if ($nilaiCf > 0) {
+                $gejalaTerpilih[] = $gejalaId;
+            }
+        }
+        // 1. VALIDASI: Jika tidak ada gejala yang dipilih sama sekali
+        if (empty($gejalaTerpilih)) {
+            return redirect()->back()->with('error', 'Silakan pilih minimal tiga gejala.');
         }
 
-        $semuaJenis = Jenis::all();
+        // 2. LOGIKA BARU ANDA: Jika jumlah gejala kurang dari 3, batalkan deteksi risiko
+        if (count($gejalaTerpilih) < 3) {
+            return redirect()->back()->with('error', 'Gejala yang dipilih belum cukup untuk menentukan kecenderungan jenis kanker serviks. Silakan lakukan konsultasi ulang jika merasakan gejala lainnya atau segera periksakan diri ke fasilitas kesehatan terdekat.');
+        }
+
+        $semuaJenis = Jenis::all(); //
         $hasilPerJenis = [];
 
-        // Bersihkan data konsultasi lama user ini (untuk laporan detail)
-        Konsultasi::where('user_id', Auth::id())->delete();
-
-        foreach ($semuaJenis as $jenis) {
-            $rules = Rule::where('jenis_id', $jenis->id)->get();
+        // --- TAHAP 1 & 2: FORWARD CHAINING & HITUNG CERTAINTY FACTOR ---
+        foreach ($semuaJenis as $jenis) { //
+            $rules = Rule::where('jenis_id', $jenis->id)->get(); //
             $cfCombine = 0;
-            $isFirst = true;
+            $isFirst = true; //
 
-            foreach ($rules as $rule) {
-                // Forward Chaining: Cek apakah gejala ini dipilih user
-                if (isset($jawabanUser[$rule->gejala_id]) && $jawabanUser[$rule->gejala_id] > 0) {
-                    $cfUser = (float)$jawabanUser[$rule->gejala_id];
+            foreach ($rules as $rule) { //
+                if (in_array($rule->gejala_id, $gejalaTerpilih)) {
+                    $cfUser = (float)$jawabanUser[$rule->gejala_id]; //
+                    $cfE = ($rule->mb - $rule->md) * $cfUser; //
 
-                    // Simpan detail untuk laporan
-                    Konsultasi::updateOrCreate(
-                        ['user_id' => Auth::id(), 'gejala_id' => $rule->gejala_id],
-                        ['nilai_cf_user' => $cfUser]
-                    );
-
-                    // Rumus CF: (MB - MD) * CF User
-                    $cfE = ($rule->mb - $rule->md) * $cfUser;
-
-                    // Combine CF
-                    if ($isFirst) {
-                        $cfCombine = $cfE;
-                        $isFirst = false;
-                    } else {
-                        $cfCombine = $cfCombine + ($cfE * (1 - $cfCombine));
+                    if ($isFirst) { //
+                        $cfCombine = $cfE; //
+                        $isFirst = false; //
+                    } else { //
+                        $cfCombine = $cfCombine + ($cfE * (1 - $cfCombine)); //
                     }
                 }
             }
-            if ($cfCombine > 0) $hasilPerJenis[$jenis->id] = $cfCombine;
+            if ($cfCombine > 0) $hasilPerJenis[$jenis->id] = $cfCombine; //
         }
 
-        if (empty($hasilPerJenis)) {
-            return redirect()->back()->with('error', 'Gejala yang Anda pilih tidak mengarah ke diagnosa apapun.');
+        if (empty($hasilPerJenis)) { //
+            return redirect()->back()->with('error', 'Gejala yang Anda pilih tidak mengarah ke diagnosa apapun.'); //
         }
 
-        arsort($hasilPerJenis);
-        $idTerpilih = array_key_first($hasilPerJenis);
+        // --- TAHAP 3: RESOLUSI KONFLIK (ALUR EVALUASI BERTINGKAT/ Persentase kecocokan / matching rule) ---
+        $cfTertinggi = max($hasilPerJenis);
+        $kandidatPenyakit = array_keys($hasilPerJenis, $cfTertinggi);
 
-        $hasil = HasilKonsultasi::create([
-            'user_id' => Auth::id(),
-            'jenis_id' => $idTerpilih,
-            'total_cf' => $hasilPerJenis[$idTerpilih],
-            'tgl_konsultasi' => now()
-        ]);
+        $statusDiagnosa = "Tunggal";
+        $idTerpilih = $kandidatPenyakit[0];
+        $kandidatIds = [];
 
-        return redirect()->route('konsultasi.hasil', $hasil->id);
+        if (count($kandidatPenyakit) > 1) {
+            $skorMatching = [];
+            foreach ($kandidatPenyakit as $jenisId) {
+                $totalGejalaDiRule = Rule::where('jenis_id', $jenisId)->count();
+                $jumlahGejalaCocok = Rule::where('jenis_id', $jenisId)->whereIn('gejala_id', $gejalaTerpilih)->count();
+                $persentase = $totalGejalaDiRule > 0 ? ($jumlahGejalaCocok / $totalGejalaDiRule) * 100 : 0;
+                $skorMatching[$jenisId] = $persentase;
+            }
+
+            $matchingTertinggi = max($skorMatching);
+            $kandidatBerdasarkanMatching = array_keys($skorMatching, $matchingTertinggi);
+
+            if (count($kandidatBerdasarkanMatching) == 1) {
+                $idTerpilih = $kandidatBerdasarkanMatching[0];
+            } else {
+                $statusDiagnosa = "Multi";
+                $idTerpilih = $kandidatBerdasarkanMatching[0]; 
+                $kandidatIds = $kandidatBerdasarkanMatching;  
+            }
+        }
+
+        // --- TAHAP 4: SIMPAN UTAMA KE TABEL HASIL KONSULTASI DULU ---
+        $hasil = HasilKonsultasi::create([ //
+            'user_id' => Auth::id(), //
+            'jenis_id' => $idTerpilih, //
+            'total_cf' => $cfTertinggi, //
+            'tgl_konsultasi' => now() //
+        ]); //
+
+        // --- TAHAP 5: SIMPAN DETAIL GEJALA TERPILIH (Mengikat ke hasil->id) ---
+        foreach ($gejalaTerpilih as $gejalaId) {
+            Konsultasi::create([
+                'user_id' => Auth::id(),
+                'hasil_konsultasi_id' => $hasil->id, // Mengikat data gejala ke sesi hasil konsultasi ini
+                'gejala_id' => $gejalaId,
+                'nilai_cf_user' => (float)$jawabanUser[$gejalaId]
+            ]);
+        }
+
+        if ($statusDiagnosa == "Multi") {
+            return redirect()->route('konsultasi.hasil', $hasil->id)->with([
+                'status_diagnosa' => 'Multi',
+                'kandidat_ids' => $kandidatIds,
+                'pesan_khusus' => 'Pasien memiliki kecenderungan terhadap lebih dari satu jenis kanker serviks. Diperlukan pemeriksaan lanjutan oleh dokter spesialis Obstetri dan Ginekologi.'
+            ]);
+        }
+
+        return redirect()->route('konsultasi.hasil', $hasil->id); //
     }
 
     // Tambahkan fungsi hapus untuk Admin
@@ -96,13 +143,13 @@ class KonsultasiController extends Controller {
     public function show($id) {
         $hasil = HasilKonsultasi::with(['user', 'jenis'])->findOrFail($id);
         // Pastikan memanggil relasi gejala melalui tabel konsultasi
-        $gejalaTerpilih = Konsultasi::with('gejala')->where('user_id', $hasil->user_id)->get();
+        $gejalaTerpilih = Konsultasi::with('gejala')->where('hasil_konsultasi_id', $hasil->id)->get();
         return view('konsultasi.hasil', compact('hasil', 'gejalaTerpilih'));
     }
 
     public function cetakPdf($id) {
         $hasil = HasilKonsultasi::with(['user', 'jenis'])->findOrFail($id);
-        $gejalaTerpilih = Konsultasi::with('gejala')->where('user_id', $hasil->user_id)->get();
+        $gejalaTerpilih = Konsultasi::with('gejala')->where('hasil_konsultasi_id', $hasil->id)->get();
         
         // Tambahkan setPaper untuk stabilitas DomPDF
         $pdf = Pdf::loadView('konsultasi.cetak', compact('hasil', 'gejalaTerpilih'))

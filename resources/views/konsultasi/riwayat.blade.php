@@ -27,7 +27,7 @@
                             <th width="5%">No</th>
                             <th>Tanggal & Waktu</th>
                             @if(Auth::user()->role == 'admin') <th>Nama Pasien</th> @endif
-                            <th>Hasil Diagnosa</th>
+                            <th>Hasil Deteksi</th>
                             <th>Kepastian</th>
                             <th width="15%">Aksi</th>
                         </tr>

@@ -125,4 +125,20 @@
         </div>
     </div>
 </div>
+
+{{-- JAVASCRIPT UNTUK OTOMATIS MEMBUKA MODAL KEMBALI --}}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // 1. Cek jika ada session sukses dari server Laravel
+        @if (session('success'))
+            // Buka kembali modal tambah secara otomatis
+            $('#tambahModal').modal('show');
+        @endif
+
+        // 2. Otomatis arahkan kursor ke input 'Nama Gejala' saat modal terbuka
+        $('#tambahModal').on('shown.bs.modal', function () {
+            $('input[name="nama_gejala"]').focus();
+        });
+    });
+</script>
 @endsection

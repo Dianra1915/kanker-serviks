@@ -71,15 +71,23 @@
         </ul>
 
         <div class="box-hasil">
-            <div class="diagnosa-title">Hasil Analisis Diagnosa:</div>
+            <div class="diagnosa-title">Hasil Analisis Risiko Kecenderungan Mengarah Pada:</div>
             <div class="diagnosa-nama">{{ strtoupper($hasil->jenis->nama_jenis) }}</div>
             <div class="persentase">{{ number_format($hasil->total_cf * 100, 0) }}%</div>
             <div style="font-size: 12px; color: #7f8c8d;">Persentase berdasarkan data medis yang diberikan</div>
         </div>
 
         <h4 class="section-title">Solusi / Saran Medis:</h4>
-        <p style="text-align: justify; background: #fff; padding: 10px;">{{ $hasil->jenis->solusi }}</p>
-        
+        <div style="background: #fff; padding: 5px 10px;">
+            <ul style="padding-left: 15px; margin: 0; line-height: 1.6; text-align: justify;">
+                @foreach(explode(PHP_EOL, $hasil->jenis->solusi) as $poin)
+                    @if(trim($poin) != null)
+                        <li style="margin-bottom: 5px;">{{ trim($poin) }}.</li>
+                    @endif
+                @endforeach
+            </ul>
+        </div>
+
         <div class="footer">
             <p>Kolaka, {{ now()->translatedFormat('d F Y') }}</p>
             <br><br>

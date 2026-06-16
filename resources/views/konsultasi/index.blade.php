@@ -6,6 +6,21 @@
         <h6 class="m-0 font-weight-bold text-white">Pilih Gejala yang Anda Rasakan</h6>
     </div>
     <div class="card-body">
+        {{-- TAMBAHAN: TAMPILKAN PESAN ERROR DARI VALIDASI MINIMAL 3 GEJALA --}}
+        @if (session('error'))
+            <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
+                <div class="d-flex align-items-start">
+                    <i class="fas fa-exclamation-triangle mr-3 mt-1" style="font-size: 1.2rem;"></i>
+                    <span class="text-dark font-weight-bold" style="line-height: 1.5;">
+                        {{ session('error') }}
+                    </span>
+                </div>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        @endif
+
         <form action="{{ route('konsultasi.proses') }}" method="POST">
             @csrf
             <div class="table-responsive">
@@ -37,7 +52,7 @@
                     </tbody>
                 </table>
             </div>
-            <button type="submit" class="btn btn-primary btn-block btn-lg mt-3 shadow">Proses Diagnosa Sekarang</button>
+            <button type="submit" class="btn btn-primary btn-block btn-lg mt-3 shadow">Proses Konsultasi Sekarang</button>
         </form>
     </div>
 </div>
