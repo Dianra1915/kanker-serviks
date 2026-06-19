@@ -1,69 +1,59 @@
 @extends('layouts.admin')
 
 @section('main-content')
-<div class="card shadow mb-4">
-    <div class="card-header py-3 bg-primary">
-        <h6 class="m-0 font-weight-bold text-white">Pilih Gejala yang Anda Rasakan</h6>
-    </div>
-    <div class="card-body">
-        {{-- TAMBAHAN: TAMPILKAN PESAN ERROR DARI VALIDASI MINIMAL 3 GEJALA --}}
-        @if (session('error'))
-            <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
-                <div class="d-flex align-items-start">
-                    <i class="fas fa-exclamation-triangle mr-3 mt-1" style="font-size: 1.2rem;"></i>
-                    <span class="text-dark font-weight-bold" style="line-height: 1.5;">
-                        {{ session('error') }}
-                    </span>
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        
+        {{-- KONDISI JIKA PASIEN TIDAK TERDIAGNOSA (SEHAT/GEJALA < 5) --}}
+        @if(session('tidak_terdeteksi'))
+            <div class="alert alert-success shadow-sm mb-4 py-4 border-left-success">
+                <h5 class="text-center font-weight-bold mb-0 text-dark" style="line-height: 1.6;">
+                    <i class="fas fa-check-circle text-success mr-2 mb-2" style="font-size: 2rem;"></i><br>
+                    {{ session('tidak_terdeteksi') }}
+                </h5>
+            </div>
+            <div class="text-center mb-4">
+                <a href="{{ route('konsultasi.index') }}" class="btn btn-primary"><i class="fas fa-redo mr-2"></i> Lakukan Skrining Ulang</a>
+            </div>
+        @else
+        
+        {{-- TAMPILAN PERTANYAAN 1 per 1 --}}
+        <div class="card shadow mb-4 border-bottom-primary">
+            <div class="card-header py-3 bg-primary d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-white">Pertanyaan ke-{{ $pertanyaanKe }} (Skrining Aktif)</h6>
+                <a href="{{ route('konsultasi.index', ['reset' => 1]) }}" class="btn btn-sm btn-danger shadow-sm"><i class="fas fa-redo"></i> Ulangi</a>
+            </div>
+            <div class="card-body text-center py-5">
+                <h5 class="mb-4 text-gray-600">Apakah Anda mengalami kondisi berikut:</h5>
+                
+                <div class="alert alert-info py-4 mb-5 shadow-sm">
+                    <h3 class="mb-0 text-primary font-weight-bold">"{{ $gejala->nama_gejala }} ?"</h3>
                 </div>
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                
+                <form action="{{ route('konsultasi.jawab') }}" method="POST" class="d-flex justify-content-center">
+                    @csrf
+                    <input type="hidden" name="gejala_id" value="{{ $gejala->id }}">
+                    
+                    {{-- TOMBOL YA (Kirim nilai 1) --}}
+                    <button type="submit" name="jawaban" value="1" class="btn btn-success btn-lg mx-2 px-5 py-3 font-weight-bold shadow">
+                        <i class="fas fa-check-circle mr-2"></i> YA
+                    </button>
+                    
+                    {{-- TOMBOL TIDAK (Kirim nilai 0) --}}
+                    <button type="submit" name="jawaban" value="0" class="btn btn-danger btn-lg mx-2 px-5 py-3 font-weight-bold shadow">
+                        <i class="fas fa-times-circle mr-2"></i> TIDAK
+                    </button>
+                </form>
             </div>
+            <div class="card-footer bg-white">
+                <small class="text-muted mb-1 d-block"><i class="fas fa-microchip mr-1"></i> Mesin Inferensi Sedang Mengevaluasi Jawaban...</small>
+                <div class="progress" style="height: 10px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 100%;"></div>
+                </div>
+            </div>
+        </div>
         @endif
-
-        <form action="{{ route('konsultasi.proses') }}" method="POST">
-            @csrf
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th width="5%">Pilih</th>
-                            <th>Gejala</th>
-                            <th width="30%">Tingkat Keyakinan</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($gejalas as $g)
-                        <tr>
-                            <td>
-                                <input type="checkbox" class="gejala-check" data-id="{{ $g->id }}" style="transform: scale(1.5)">
-                            </td>
-                            <td>{{ $g->nama_gejala }}</td>
-                            <td>
-                                <select name="jawaban[{{ $g->id }}]" id="select-{{ $g->id }}" class="form-control" disabled>
-                                    <option value="0">-- Pilih Keyakinan --</option>
-                                    @foreach($skala as $nilai => $label)
-                                        <option value="{{ $nilai }}">{{ $label }} ({{ $nilai }})</option>
-                                    @endforeach
-                                </select>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-            <button type="submit" class="btn btn-primary btn-block btn-lg mt-3 shadow">Proses Konsultasi Sekarang</button>
-        </form>
+        
     </div>
 </div>
-
-<script>
-document.querySelectorAll('.gejala-check').forEach(check => {
-    check.addEventListener('change', function() {
-        const select = document.getElementById('select-' + this.dataset.id);
-        select.disabled = !this.checked;
-        if(!this.checked) select.value = "0";
-    });
-});
-</script>
 @endsection

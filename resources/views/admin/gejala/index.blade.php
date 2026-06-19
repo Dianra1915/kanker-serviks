@@ -129,8 +129,8 @@
 {{-- JAVASCRIPT UNTUK OTOMATIS MEMBUKA MODAL KEMBALI --}}
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // 1. Cek jika ada session sukses dari server Laravel
-        @if (session('success'))
+        // 1. Cek jika ada session KHUSUS TAMBAH dari controller
+        @if (session('tambah_lagi'))
             // Buka kembali modal tambah secara otomatis
             $('#tambahModal').modal('show');
         @endif

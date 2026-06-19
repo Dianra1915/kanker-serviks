@@ -272,6 +272,7 @@
                                 <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
                                 {{ __('Profile') }}
                             </a>
+                            <!--  
                             <a class="dropdown-item" href="javascript:void(0)">
                                 <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
                                 {{ __('Settings') }}
@@ -280,6 +281,7 @@
                                 <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
                                 {{ __('Activity Log') }}
                             </a>
+                            -->
                             <div class="dropdown-divider"></div>
                             <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
                                 <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
@@ -308,7 +310,7 @@
         <footer class="sticky-footer bg-white">
             <div class="container my-auto">
                 <div class="copyright text-center my-auto">
-                    <span>Copyright &copy; Alejandro RH 2020 | Nurfachmi Academy</span>
+                    <span>&copy; 2026 | RSIA Budi Medika Kolaka</span>
                 </div>
             </div>
         </footer>
@@ -325,23 +327,36 @@
 </a>
 
 <!-- Logout Modal-->
-<div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">{{ __('Ready to Leave?') }}</h5>
+<div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="logoutModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px;">
+            
+            <div class="modal-header border-bottom-0 pt-4 pb-0 px-4">
+                <h5 class="modal-title font-weight-bold text-dark" id="logoutModalLabel">
+                    <i class="fas fa-sign-out-alt text-danger mr-2"></i>Konfirmasi Keluar
+                </h5>
                 <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">×</span>
+                    <span aria-hidden="true" style="font-size: 1.5rem;">&times;</span>
                 </button>
             </div>
-            <div class="modal-body">Apakah anda yakin ingin keluar?</div>
-            <div class="modal-footer">
-                <button class="btn btn-link" type="button" data-dismiss="modal">{{ __('Cancel') }}</button>
-                <a class="btn btn-danger" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">{{ __('Logout') }}</a>
-                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+            
+            <div class="modal-body px-4 py-4 text-gray-800" style="font-size: 1.05rem;">
+                Apakah Anda yakin ingin mengakhiri sesi dan keluar dari sistem saat ini?
+            </div>
+            
+            <div class="modal-footer border-top-0 px-4 pb-4 pt-0">
+                <button class="btn btn-outline-secondary px-4 font-weight-bold" type="button" data-dismiss="modal" style="border-radius: 8px;">
+                    Batal
+                </button>
+                <a class="btn btn-danger px-4 font-weight-bold shadow-sm" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" style="border-radius: 8px;">
+                    Ya, Keluar
+                </a>
+                
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
                     @csrf
                 </form>
             </div>
+            
         </div>
     </div>
 </div>

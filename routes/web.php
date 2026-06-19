@@ -27,10 +27,13 @@ Route::middleware('auth')->group(function() {
 
     // AKSES BERSAMA (Admin & Pasien)
     Route::get('/konsultasi', [KonsultasiController::class, 'index'])->name('konsultasi.index');
-    Route::post('/konsultasi/proses', [KonsultasiController::class, 'prosesDiagnosa'])->name('konsultasi.proses');
+    // TAMBAHAN BARU: Rute untuk menyimpan jawaban 1 per 1 (Ya/Tidak) ke session
+    Route::post('/konsultasi/jawab', [KonsultasiController::class, 'simpanJawaban'])->name('konsultasi.jawab');
+    // UBAH: dari Route::post menjadi Route::get karena proses diagnosa sekarang otomatis terpanggil/redirect saat pertanyaan habis
+    Route::get('/konsultasi/proses', [KonsultasiController::class, 'prosesDiagnosa'])->name('konsultasi.proses');
     Route::get('/konsultasi/hasil/{id}', [KonsultasiController::class, 'show'])->name('konsultasi.hasil');
     Route::get('/riwayat', [KonsultasiController::class, 'riwayat'])->name('riwayat');
-    
+
     // Tambahkan rute Cetak PDF di sini agar bisa diakses Pasien & Admin
     Route::get('/konsultasi/cetak/{id}', [KonsultasiController::class, 'cetakPdf'])->name('konsultasi.cetak');
     Route::get('/riwayat/cetak-semua', [KonsultasiController::class, 'cetakSemua'])->name('riwayat.cetak_semua');

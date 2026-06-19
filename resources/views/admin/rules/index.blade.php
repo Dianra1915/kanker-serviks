@@ -106,10 +106,10 @@
                                     <td>
                                         <select name="mb[{{ $g->id }}]" id="mb-select-{{ $g->id }}" class="form-control form-control-sm mb-input" disabled>
                                             <option value="0">-- Pilih Nilai --</option>
-                                            <option value="1">Pasti Ya (1)</option>
-                                            <option value="0.8">Kemungkinan Besar (0.8)</option>
-                                            <option value="0.6">Mungkin (0.6)</option>
-                                            <option value="0.4">Kemungkinan Kecil (0.4)</option>
+                                            <option value="0.8">Sangat kuat (0.8)</option>
+                                            <option value="0.6">Kuat (0.6)</option>
+                                            <option value="0.4">Sedang (0.4)</option>
+                                            <option value="0.2">Lemah (0.2)</option>
                                         </select>
                                     </td>
                                 </tr>

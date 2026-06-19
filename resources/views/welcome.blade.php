@@ -129,35 +129,55 @@
         </div>
     </section>
 
-    <section class="bg-white">
+    <section class="bg-white py-5">
         <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-5 text-center mb-4 mb-lg-0">
-                    <div style="width: 350px; height: 350px; margin: 0 auto; overflow: hidden; border-radius: 50%; border: 8px solid white;" class="shadow">
-                        <img src="{{ asset('img/ibu_dokter.png') }}" 
-                            alt="Tim Dokter RSIA" 
-                            style="width: 100%; height: 100%; object-fit: cover; object-position: center top;">
+            <div class="row justify-content-center text-center mb-5">
+                <div class="col-lg-8">
+                    <h2 class="font-weight-bold mb-3 text-dark">Hubungi Kami</h2>
+                    <p class="text-muted" style="font-size: 1.1rem; line-height: 1.6;">
+                        Kami siap melayani Anda di Rumah Sakit Ibu & Anak Budi Medika Kolaka. Silakan kunjungi atau hubungi kami melalui kanal berikut:
+                    </p>
+                </div>
+            </div>
+            
+            <div class="row justify-content-center">
+                
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card h-100 border-0 shadow-sm" style="border-radius: 15px;">
+                        <div class="card-body text-center py-4 px-3">
+                            <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 shadow-sm" style="width: 70px; height: 70px; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); color: white;">
+                                <i class="fab fa-instagram" style="font-size: 2rem;"></i>
+                            </div>
+                            <h5 class="font-weight-bold text-dark">Instagram</h5>
+                            <p class="text-muted mb-0">@rsiabudimedikakolaka</p>
+                        </div>
                     </div>
                 </div>
-                <div class="col-lg-7">
-                    <h2 class="font-weight-bold mb-4">Hubungi Kami</h2>
-                    <p class="text-muted mb-4">Kami siap melayani Anda di Rumah Sakit Ibu & Anak Budi Medika Kolaka. Silakan kunjungi atau hubungi kami melalui kanal berikut:</p>
-                    
-                    <div class="contact-info">
-                        <p class="d-flex align-items-center mb-3">
-                            <i class="fab fa-instagram mr-3" style="font-size: 1.2rem; width: 25px;"></i> 
-                            <span>@rsiabudimedikakolaka</span>
-                        </p>
-                        <p class="d-flex align-items-center mb-3">
-                            <i class="fab fa-whatsapp mr-3" style="font-size: 1.2rem; width: 25px;"></i> 
-                            <span>+62 812-1212-5100</span>
-                        </p>
-                        <p class="d-flex align-items-center mb-3">
-                            <i class="fas fa-map-marker-alt mr-3" style="font-size: 1.2rem; width: 25px;"></i> 
-                            <span>Jl. Pramuka No.113, Lamokato, Kec. Kolaka, Kabupaten Kolaka, Sulawesi Tenggara</span>
-                        </p>
+
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card h-100 border-0 shadow-sm" style="border-radius: 15px;">
+                        <div class="card-body text-center py-4 px-3">
+                            <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 shadow-sm bg-success text-white" style="width: 70px; height: 70px;">
+                                <i class="fab fa-whatsapp" style="font-size: 2.2rem;"></i>
+                            </div>
+                            <h5 class="font-weight-bold text-dark">WhatsApp</h5>
+                            <p class="text-muted mb-0">+62 812-1212-5100</p>
+                        </div>
                     </div>
                 </div>
+
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card h-100 border-0 shadow-sm" style="border-radius: 15px;">
+                        <div class="card-body text-center py-4 px-3">
+                            <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 shadow-sm bg-danger text-white" style="width: 70px; height: 70px;">
+                                <i class="fas fa-map-marker-alt" style="font-size: 2rem;"></i>
+                            </div>
+                            <h5 class="font-weight-bold text-dark">Alamat</h5>
+                            <p class="text-muted mb-0" style="font-size: 0.95rem;">Jl. Pramuka No.113, Lamokato<br>Kabupaten Kolaka, Sultra</p>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </section>

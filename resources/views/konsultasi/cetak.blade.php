@@ -4,30 +4,44 @@
     <meta charset="utf-8">
     <title>Hasil Diagnosa - {{ $hasil->user->username }}</title>
     <style>
-        body { font-family: 'Helvetica', Arial, sans-serif; line-height: 1.5; color: #333; margin: 0; padding: 0; }
-        .container { padding: 20px; }
+        body { font-family: 'Helvetica', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; font-size: 12px; }
+        .container { padding: 25px; }
         
         /* Layout Kop Surat */
-        .kop-table { width: 100%; border-bottom: 3px solid #5dade2; padding-bottom: 10px; margin-bottom: 30px; }
+        .kop-table { width: 100%; border-bottom: 3px solid #4e73df; padding-bottom: 10px; margin-bottom: 25px; border-collapse: collapse; }
         .kop-logo { width: 70px; text-align: left; vertical-align: middle; }
-        .kop-text-container { text-align: left; vertical-align: middle; padding-left: 15px; }
-        .logo-text { color: #5dade2; font-size: 24px; text-align: center; font-weight: bold; margin: 0; }
-        .sub-logo { font-size: 14px; color: #7f8c8d; text-align: center; margin-top: 5px; }
+        .kop-text-container { text-align: left; vertical-align: middle; padding-left: 10px; }
+        .logo-text { color: #4e73df; font-size: 20px; font-weight: bold; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; }
+        .sub-logo { font-size: 11px; color: #7f8c8d; margin-top: 3px; font-weight: bold; }
         
-        .info-section { margin-bottom: 25px; width: 100%; }
-        .label-blue { color: #2e86c1; font-weight: bold; }
+        /* Informasi Pasien */
+        .info-section { margin-bottom: 20px; width: 100%; border-collapse: collapse; }
+        .info-section td { padding: 4px 0; vertical-align: top; }
+        .label-blue { color: #4e73df; font-weight: bold; }
         
-        .box-hasil { background-color: #ebf5fb; border: 1px solid #5dade2; padding: 25px; text-align: center; border-radius: 10px; margin: 30px 0; }
-        .diagnosa-title { font-size: 18px; margin-bottom: 10px; color: #2c3e50; }
-        .diagnosa-nama { font-size: 24px; color: #e74c3c; font-weight: bold; margin: 0; }
-        .persentase { font-size: 30px; color: #2e86c1; font-weight: bold; margin: 10px 0; }
+        /* Section Title */
+        .section-title { font-size: 13px; color: #2c3e50; font-weight: bold; border-bottom: 1px solid #e3e6f0; padding-bottom: 5px; margin-top: 20px; margin-bottom: 10px; }
         
-        .section-title { border-bottom: 1px solid #5dade2; color: #2e86c1; padding-bottom: 5px; margin-top: 20px; }
-        .gejala-list { margin-left: 20px; padding: 0; }
-        .gejala-list li { margin-bottom: 5px; }
+        /* Daftar Gejala */
+        .gejala-list { padding-left: 15px; margin: 0; }
+        .gejala-list li { margin-bottom: 5px; text-align: justify; color: #2c3e50; }
         
-        .footer { margin-top: 50px; text-align: right; font-size: 12px; }
-        .watermark { position: fixed; bottom: 0; left: 0; font-size: 10px; color: #bdc3c7; }
+        /* Box Hasil Utama (Mengikuti Kalimat Baru) */
+        .box-hasil { background-color: #f8f9fc; border: 1px solid #e3e6f0; border-left: 5px solid #e74c3c; padding: 15px 20px; margin: 20px 0; border-radius: 4px; text-align: center; }
+        .hasil-text { font-size: 13px; color: #2c3e50; line-height: 1.8; margin: 0; }
+        .highlight-cf { color: #e74c3c; font-weight: bold; font-size: 14px; }
+        .highlight-jenis { color: #4e73df; font-weight: bold; font-size: 15px; text-transform: uppercase; }
+        
+        /* Solusi Paragraf Teks Murni */
+        .solusi-content { text-align: justify; background: #fff; padding: 5px 0; color: #2c3e50; line-height: 1.7; }
+        
+        /* Disclaimer Box */
+        .disclaimer-box { background-color: #fff3cd; border: 1px solid #ffeeba; border-left: 4px solid #f6c23e; padding: 10px 15px; margin-top: 25px; border-radius: 4px; color: #664d03; font-size: 10.5px; text-align: justify; line-height: 1.5; }
+        
+        /* Footer & Tanda Tangan */
+        .footer { margin-top: 40px; width: 100%; border-collapse: collapse; }
+        .footer td { vertical-align: top; }
+        .signature-space { height: 60px; }
     </style>
 </head>
 <body>
@@ -35,67 +49,60 @@
         <table class="kop-table">
             <tr>
                 <td class="kop-logo">
-                    <img src="{{ public_path('img/logo.png') }}" style="height: 70px; width: auto;">
+                    <img src="{{ public_path('img/logo.png') }}" style="height: 55px; width: auto; max-width: 60px;">
                 </td>
                 <td class="kop-text-container">
-                    <h1 class="logo-text">RSIA BUDI MEDIKA KOLAKA</h1>
-                    <div class="sub-logo">Sistem Pakar Deteksi Dini Kanker Serviks (Metode CF)</div>
+                    <h2 class="logo-text">Laporan Skrining Sistem Pakar</h2>
+                    <div class="sub-logo">RSIA BUDI MEDIKA KOLAKA</div>
                 </td>
             </tr>
         </table>
 
         <table class="info-section">
             <tr>
-                <td width="20%" class="label-blue">Nama Pasien</td>
-                <td width="3%">:</td>
-                <td>{{ $hasil->user->username }}</td>
-                <td width="20%" class="label-blue">ID Konsultasi</td>
-                <td width="3%">:</td>
-                <td>#RSIA-{{ str_pad($hasil->id, 5, '0', STR_PAD_LEFT) }}</td>
+                <td width="18%" class="label-blue">Nama Pasien</td>
+                <td width="2%">:</td>
+                <td width="30%"><strong>{{ $hasil->user->username }}</strong></td>
+                <td width="18%" class="label-blue">Tanggal Skrining</td>
+                <td width="2%">:</td>
+                <td>{{ \Carbon\Carbon::parse($hasil->tgl_konsultasi)->locale('id')->translatedFormat('d F Y') }}</td>
             </tr>
             <tr>
-                <td class="label-blue">Tanggal</td>
-                <td>:</td>
-                <td>{{ \Carbon\Carbon::parse($hasil->tgl_konsultasi)->format('d F Y') }}</td>
                 <td class="label-blue">No. Handphone</td>
                 <td>:</td>
                 <td>{{ $hasil->user->phone_number ?? '-' }}</td>
+                <td class="label-blue">Waktu Sesi</td>
+                <td>:</td>
+                <td>{{ \Carbon\Carbon::parse($hasil->tgl_konsultasi)->format('H:i') }} WITA</td>
             </tr>
         </table>
 
-        <h4 class="section-title">Gejala yang Dirasakan:</h4>
-        <ul class="gejala-list">
+        <h4 class="section-title"><i class="fas fa-notes-medical"></i> Gejala Klinis Yang Dikonfirmasi:</h4>
+        <ol class="gejala-list">
             @foreach($gejalaTerpilih as $item)
-                <li>{{ $item->gejala->nama_gejala }}</li>
+                <li>[{{ $item->gejala->kode_gejala }}] {{ $item->gejala->nama_gejala }}</li>
             @endforeach
-        </ul>
+        </ol>
 
         <div class="box-hasil">
-            <div class="diagnosa-title">Hasil Analisis Risiko Kecenderungan Mengarah Pada:</div>
-            <div class="diagnosa-nama">{{ strtoupper($hasil->jenis->nama_jenis) }}</div>
-            <div class="persentase">{{ number_format($hasil->total_cf * 100, 0) }}%</div>
-            <div style="font-size: 12px; color: #7f8c8d;">Persentase berdasarkan data medis yang diberikan</div>
+            <p class="hasil-text">
+                Berdasarkan Konsultasi yang dilakukan oleh pasien, <br>
+                memiliki risiko terhadap kanker serviks sebesar 
+                <span class="highlight-cf">{{ number_format($hasil->total_cf * 100, 0) }}%</span> 
+                dengan kecenderungan pola gejala mengarah pada <br>
+                <span class="highlight-jenis">{{ $hasil->jenis->nama_jenis }}</span>
+            </p>
         </div>
 
-        <h4 class="section-title">Solusi / Saran Medis:</h4>
-        <div style="background: #fff; padding: 5px 10px;">
-            <ul style="padding-left: 15px; margin: 0; line-height: 1.6; text-align: justify;">
-                @foreach(explode(PHP_EOL, $hasil->jenis->solusi) as $poin)
-                    @if(trim($poin) != null)
-                        <li style="margin-bottom: 5px;">{{ trim($poin) }}.</li>
-                    @endif
-                @endforeach
-            </ul>
+        <h4 class="section-title">Solusi & Saran Tindakan Rekomendasi:</h4>
+        <div class="solusi-content">
+            {!! nl2br(e($hasil->jenis->solusi)) !!}
         </div>
 
-        <div class="footer">
-            <p>Kolaka, {{ now()->translatedFormat('d F Y') }}</p>
-            <br><br>
-            <p><strong>Sistem Pakar RSIA Budi Medika</strong></p>
-        </div>
-
-        <div class="watermark">
-            *Laporan ini dihasilkan secara otomatis oleh sistem dan dapat digunakan sebagai acuan awal sebelum pemeriksaan laboratorium.
+        <div class="disclaimer-box">
+            <strong>Pemberitahuan Penting:</strong> Hasil yang ditampilkan merupakan hasil deteksi risiko berdasarkan gejala dan faktor risiko yang dipilih pengguna menggunakan metode 
+            Forward Chaining dan Certainty Factor. Hasil ini bukan merupakan diagnosis medis pasti dan tidak dapat menggantikan pemeriksaan langsung oleh dokter. Untuk memperoleh diagnosis yang akurat, 
+            pasien tetap disarankan melakukan konsultasi dan pemeriksaan lebih lanjut dengan dokter spesialis Obstetri dan Ginekologi (Obgyn).
         </div>
     </div>
 </body>

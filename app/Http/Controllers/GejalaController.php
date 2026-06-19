@@ -46,7 +46,9 @@ class GejalaController extends Controller
             'nama_gejala' => $request->nama_gejala,
         ]);
 
-        return redirect()->back()->with('success', "Gejala berhasil ditambah dengan kode $kodeBaru");
+        return redirect()->back()
+            ->with('success', "Gejala berhasil ditambah dengan kode $kodeBaru")
+            ->with('tambah_lagi', true);
     }
 
     public function update(Request $request, $id)
