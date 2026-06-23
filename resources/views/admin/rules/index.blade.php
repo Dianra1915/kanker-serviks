@@ -9,6 +9,14 @@
         <button type="button" class="close" data-dismiss="alert">&times;</button>
     </div>
 @endif
+@if (session('error'))
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <i class="fas fa-exclamation-triangle mr-2"></i> {{ session('error') }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+@endif
 
 <button class="btn btn-primary mb-3" data-toggle="modal" data-target="#tambahRuleModal">
     <i class="fas fa-plus mr-2"></i> Tambah Aturan 
@@ -155,10 +163,10 @@
                             <div class="form-group">
                                 <label for="mb_{{ $r->id }}" class="font-weight-bold text-primary">Nilai MB (Pakar)</label>
                                 <select name="mb" id="mb_{{ $r->id }}" class="form-control" required>
-                                    <option value="1.0" {{ $r->mb == 1.0 ? 'selected' : '' }}>Sangat Yakin (1.0)</option>
-                                    <option value="0.8" {{ $r->mb == 0.8 ? 'selected' : '' }}>Yakin (0.8)</option>
-                                    <option value="0.6" {{ $r->mb == 0.6 ? 'selected' : '' }}>Cukup Yakin (0.6)</option>
-                                    <option value="0.4" {{ $r->mb == 0.4 ? 'selected' : '' }}>Kurang Yakin (0.4)</option>
+                                    <option value="1.0" {{ $r->mb == 0.8 ? 'selected' : '' }}>Sangat Kuat (0.8)</option>
+                                    <option value="0.8" {{ $r->mb == 0.6 ? 'selected' : '' }}>Kuat (0.6)</option>
+                                    <option value="0.6" {{ $r->mb == 0.4 ? 'selected' : '' }}>Sedang (0.4)</option>
+                                    <option value="0.4" {{ $r->mb == 0.2 ? 'selected' : '' }}>Lemah (0.2)</option>
                                 </select>
                             </div>
                         </div>

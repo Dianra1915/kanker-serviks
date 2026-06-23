@@ -30,9 +30,15 @@
                                     <div class="form-group">
                                         <input type="text" class="form-control form-control-user" name="username" placeholder="Nama Lengkap / Username" value="{{ old('username') }}" required>
                                     </div>
-
+                            
                                     <div class="form-group">
-                                        <input type="text" class="form-control form-control-user" name="phone_number" placeholder="Nomor Handphone Aktif (Contoh: 081234567xx)" value="{{ old('phone_number') }}" required>
+                                        <input type="text" 
+                                            name="phone_number" 
+                                            class="form-control form-control-user" 
+                                            placeholder="Nomor Handphone Aktif (Contoh: 081234567890)" 
+                                            required 
+                                            onkeypress="return event.charCode >= 48 && event.charCode <= 57"
+                                            value="{{ old('phone_number') }}">
                                     </div>
 
                                     <div class="form-group">

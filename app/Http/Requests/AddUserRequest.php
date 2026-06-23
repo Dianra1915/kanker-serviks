@@ -25,7 +25,7 @@ class AddUserRequest extends FormRequest
     {
         return [
             'username' => 'required|unique:users,username',
-            'phone_number' => 'required|unique:users,phone_number',
+            'phone_number' => 'required|numeric|unique:users,phone_number',
             'password' => 'required|min:6|regex:/^[A-Z]/'
         ];
     }

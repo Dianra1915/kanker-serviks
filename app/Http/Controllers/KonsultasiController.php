@@ -84,7 +84,7 @@ class KonsultasiController extends Controller {
              return redirect()->route('konsultasi.index')->with('error', 'Sesi tidak valid.');
         }
 
-        // Filter: Hanya ambil ID Gejala yang dijawab "YA" (Nilai 1)
+        // Langkah 1. : Filter, Hanya ambil ID Gejala yang dijawab "YA" (Nilai 1)
         $gejalaTerpilih = [];
         foreach ($answers as $gId => $val) {
             if ($val == 1) {
@@ -102,7 +102,7 @@ class KonsultasiController extends Controller {
         $hasilPerJenis = [];
 
         // --- TAHAP CF: KARENA USER JAWAB YA, NILAI CF USER = 1 ---
-        // 1. Ambil semua aturan (rules) penyakit dari database
+        // 2. Ambil semua aturan (rules) penyakit dari database
         foreach ($semuaJenis as $jenis) {
             $rules = Rule::where('jenis_id', $jenis->id)->get();
             $cfCombine = 0;
@@ -110,22 +110,24 @@ class KonsultasiController extends Controller {
 
             foreach ($rules as $rule) {
                 // ---> LETAK FORWARD CHAINING BEKERJA <---
-                // 2. IF Fakta (Gejala Pasien) == Premis (Gejala di Rule) THEN (Jalankan aturan)
+                // 3. IF Fakta (Gejala Pasien) == Premis (Gejala di Rule) THEN (Jalankan aturan)
                 if (in_array($rule->gejala_id, $gejalaTerpilih)) {
-                    // 3. MENGHITUNG CF GEJALA TUNGGAL (CF Pakar x CF User)
+                    // 4. MENGHITUNG CF GEJALA TUNGGAL (CF Pakar x CF User)
                     // Rumus: (MB - MD) * CF User. (CF User selalu 1)
                     $cfE = ($rule->mb - $rule->md) * 1; 
 
-                    // 4. MENGGABUNGKAN CF (Kombinasi jika ada >1 gejala yang mengarah pada satu penyakit yang sama)
+                    // 5. MENGGABUNGKAN CF (Kombinasi jika ada >1 gejala yang mengarah pada satu penyakit yang sama)
                     if ($isFirst) {
+                        // Jika ini gejala pertama yang cocok, jadikan nilai CF awal
                         $cfCombine = $cfE;
                         $isFirst = false;
                     } else {
-                        // 5. RUMUS CF COMBINE: CF_Lama + (CF_Baru * (1 - CF_Lama))
+                        // 6. RUMUS CF COMBINE: CF_Lama + (CF_Baru * (1 - CF_Lama))
                         $cfCombine = $cfCombine + ($cfE * (1 - $cfCombine));
                     }
                 }
             }
+            // Simpan hasil CF kombinasi penyakit tersebut ke dalam array
             if ($cfCombine > 0) $hasilPerJenis[$jenis->id] = $cfCombine;
         }
 
