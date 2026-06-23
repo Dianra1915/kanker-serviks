@@ -95,15 +95,40 @@ class KonsultasiController extends Controller {
         // --- SKENARIO TIDAK TERDIAGNOSA (Kurang dari 2 Gejala) ---
         if (count($gejalaTerpilih) < 2) {
             session()->forget('konsultasi_answers');
-            return redirect()->route('konsultasi.index')->with('tidak_terdeteksi', 'Berdasarkan Konsultasi yang dilakukan oleh pasien, pasien tidak terdeteksi memiliki risiko terhadap kanker serviks.');
+            return redirect()->route('konsultasi.index')->with('tidak_terdeteksi', 'Berdasarkan Konsultasi yang dilakukan oleh pasien, 
+            pasien tidak terdeteksi memiliki risiko terhadap kanker serviks.');
         }
 
         $semuaJenis = Jenis::all();
         $hasilPerJenis = [];
 
+        // --->DEKLARASI SYARAT GEJALA MAYOR DI SINI <---
+        // Jenis 4 WAJIB memiliki minimal salah satu dari Gejala: 21, 30, 31, 35, atau 37
+        $gejalaMayor = [
+            5 => [61, 70, 71, 75, 77], 
+        ];
+
         // --- TAHAP CF: KARENA USER JAWAB YA, NILAI CF USER = 1 ---
         // 2. Ambil semua aturan (rules) penyakit dari database
         foreach ($semuaJenis as $jenis) {
+
+            // ---> 2. PENGECEKAN SYARAT MUTLAK (GEJALA MAYOR) <---
+                if (isset($gejalaMayor[$jenis->id])) {
+                    $punyaGejalaMayor = false;
+                    
+                    // Cek apakah ada minimal 1 gejala mayor yang dijawab "YA" oleh pasien
+                    foreach ($gejalaMayor[$jenis->id] as $mayorId) {
+                        if (in_array($mayorId, $gejalaTerpilih)) {
+                            $punyaGejalaMayor = true;
+                            break; 
+                        }
+                    }
+                    // Jika pasien TIDAK menjawab YA pada satupun gejala mayor penyakit ini...
+                    if (!$punyaGejalaMayor) {
+                        continue; // ...MAKA GUGURKAN! (Lompati perhitungan CF Jenis 4 ini)
+                    }
+                }
+                
             $rules = Rule::where('jenis_id', $jenis->id)->get();
             $cfCombine = 0;
             $isFirst = true;
