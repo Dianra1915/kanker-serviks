@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\{Gejala, Rule, Jenis, Konsultasi, HasilKonsultasi};
 use Illuminate\Support\Facades\DB;
 use Auth;
-use Barryvdh\DomPDF\Facade\Pdf; // Pastikan sudah install dompdf
+use Barryvdh\DomPDF\Facade\Pdf; 
 
 class KonsultasiController extends Controller {
 
@@ -18,46 +18,38 @@ class KonsultasiController extends Controller {
 
         $answers = session('konsultasi_answers', []); 
         
-        // Ambil semua jenis penyakit untuk dievaluasi satu per satu
         $semuaJenis = Jenis::orderBy('id', 'asc')->get();
         
         $nextGejalaId = null;
 
         foreach ($semuaJenis as $jenis) {
-            // Ambil rule / gejala yang khusus dimiliki oleh penyakit ini saja
             $rules = Rule::where('jenis_id', $jenis->id)->orderBy('id', 'asc')->get();
             
             $jumlahTidak = 0;
             $jumlahYa = 0;
             $gejalaBelumDijawab = [];
 
-            // Evaluasi jawaban pasien terhadap gejala-gejala penyakit ini
             foreach ($rules as $rule) {
                 $gId = $rule->gejala_id;
                 if (isset($answers[$gId])) {
                     if ($answers[$gId] == 0) $jumlahTidak++;
-                    if ($answers[$gId] == 1) $jumlahYa++;
+                    // CF User lebih dari 0 dianggap "YA" untuk Forward Chaining
+                    if ($answers[$gId] > 0) $jumlahYa++; 
                 } else {
                     $gejalaBelumDijawab[] = $gId;
                 }
             }
 
-            // ---> LOGIKA KECERDASAN FORWARD CHAINING (ELIMINASI HIPOTESIS) <---
-            // Jika pasien sudah menjawab "TIDAK" sebanyak 5 kali pada gejala penyakit ini
-            // DAN pasien belum pernah menjawab "YA" satupun untuk penyakit ini...
-            // MAKA: Gugurkan penyakit ini (Skip sisa pertanyaannya) dan cek penyakit berikutnya.
             if ($jumlahTidak >= 5 && $jumlahYa == 0) {
-                continue; // Lompati! (Sisa gejala penyakit ini tidak akan ditanyakan)
+                continue; 
             }
 
-            // Jika penyakit ini belum gugur dan masih ada gejala yang belum ditanyakan, tanyakan sekarang!
             if (!empty($gejalaBelumDijawab)) {
                 $nextGejalaId = $gejalaBelumDijawab[0];
-                break; // Hentikan pencarian, kita tampilkan pertanyaan ini ke layar
+                break; 
             }
         }
 
-        // Jika semua penyakit sudah dievaluasi/digugurkan, otomatis hitung hasilnya
         if (!$nextGejalaId) {
             return redirect()->route('konsultasi.proses');
         }
@@ -68,13 +60,29 @@ class KonsultasiController extends Controller {
         return view('konsultasi.index', compact('gejala', 'pertanyaanKe'));
     }
 
-    // Fungsi Baru: Menyimpan jawaban 1/0 ke memori sementara
     public function simpanJawaban(Request $request) {
         $answers = session('konsultasi_answers', []);
-        $answers[$request->gejala_id] = $request->jawaban; // 1 (YA) atau 0 (TIDAK)
+        // Menyimpan nilai CF User (1.0, 0.8, 0.6, 0.4, 0.2, atau 0.0)
+        $answers[$request->gejala_id] = $request->jawaban; 
         session(['konsultasi_answers' => $answers]);
 
-        return redirect()->route('konsultasi.index'); // Lanjut ke pertanyaan berikutnya
+        return redirect()->route('konsultasi.index'); 
+    }
+    
+    public function kembali() {
+        $answers = session('konsultasi_answers', []);
+        
+        if (!empty($answers)) {
+            // Mengambil kunci (gejala_id) terakhir yang dijawab
+            $keys = array_keys($answers);
+            $lastKey = end($keys);
+            
+            // Menghapus jawaban terakhir dari memori (Undo)
+            unset($answers[$lastKey]);
+            session(['konsultasi_answers' => $answers]);
+        }
+
+        return redirect()->route('konsultasi.index');
     }
 
     public function prosesDiagnosa() {
@@ -84,91 +92,80 @@ class KonsultasiController extends Controller {
              return redirect()->route('konsultasi.index')->with('error', 'Sesi tidak valid.');
         }
 
-        // Langkah 1. : Filter, Hanya ambil ID Gejala yang dijawab "YA" (Nilai 1)
+        // Langkah 1. : Filter, Hanya ambil ID Gejala yang dijawab "YA" (Nilai > 0)
         $gejalaTerpilih = [];
         foreach ($answers as $gId => $val) {
-            if ($val == 1) {
+            if ($val > 0) {
                 $gejalaTerpilih[] = $gId;
             }
         }
 
-        // --- SKENARIO TIDAK TERDIAGNOSA (Kurang dari 2 Gejala) ---
         if (count($gejalaTerpilih) < 2) {
             session()->forget('konsultasi_answers');
             return redirect()->route('konsultasi.index')->with('tidak_terdeteksi', 'Berdasarkan Konsultasi yang dilakukan oleh pasien, 
             pasien tidak terdeteksi memiliki risiko terhadap kanker serviks.');
         }
 
+        //2. Ambil semua aturan (rules) penyakit dari database
         $semuaJenis = Jenis::all();
         $hasilPerJenis = [];
 
-        // --->DEKLARASI SYARAT GEJALA MAYOR DI SINI <---
-        // Jenis 4 WAJIB memiliki minimal salah satu dari Gejala: 21, 30, 31, 35, atau 37
         $gejalaMayor = [
-            5 => [61, 70, 71, 75, 77], 
+            5 => [61, 70, 71, 75, 77], // Sesuaikan dengan ID asli di database Anda
         ];
 
-        // --- TAHAP CF: KARENA USER JAWAB YA, NILAI CF USER = 1 ---
-        // 2. Ambil semua aturan (rules) penyakit dari database
         foreach ($semuaJenis as $jenis) {
 
-            // ---> 2. PENGECEKAN SYARAT MUTLAK (GEJALA MAYOR) <---
-                if (isset($gejalaMayor[$jenis->id])) {
-                    $punyaGejalaMayor = false;
-                    
-                    // Cek apakah ada minimal 1 gejala mayor yang dijawab "YA" oleh pasien
-                    foreach ($gejalaMayor[$jenis->id] as $mayorId) {
-                        if (in_array($mayorId, $gejalaTerpilih)) {
-                            $punyaGejalaMayor = true;
-                            break; 
-                        }
-                    }
-                    // Jika pasien TIDAK menjawab YA pada satupun gejala mayor penyakit ini...
-                    if (!$punyaGejalaMayor) {
-                        continue; // ...MAKA GUGURKAN! (Lompati perhitungan CF Jenis 4 ini)
+            if (isset($gejalaMayor[$jenis->id])) {
+                $punyaGejalaMayor = false;
+                
+                foreach ($gejalaMayor[$jenis->id] as $mayorId) {
+                    if (in_array($mayorId, $gejalaTerpilih)) {
+                        $punyaGejalaMayor = true;
+                        break; 
                     }
                 }
+                if (!$punyaGejalaMayor) {
+                    continue; 
+                }
+            }
                 
             $rules = Rule::where('jenis_id', $jenis->id)->get();
             $cfCombine = 0;
             $isFirst = true;
 
+            // ---> Letak Forward Chaining Bekerja <---
+            // 3. IF Fakta (Gejala Pasien) == Premis (Gejala di Rule) THEN (Jalankan aturan)
             foreach ($rules as $rule) {
-                // ---> LETAK FORWARD CHAINING BEKERJA <---
-                // 3. IF Fakta (Gejala Pasien) == Premis (Gejala di Rule) THEN (Jalankan aturan)
                 if (in_array($rule->gejala_id, $gejalaTerpilih)) {
-                    // 4. MENGHITUNG CF GEJALA TUNGGAL (CF Pakar x CF User)
-                    // Rumus: (MB - MD) * CF User. (CF User selalu 1)
-                    $cfE = ($rule->mb - $rule->md) * 1; 
+                    
+                    // Ambil nilai CF User dari session
+                    $cfUser = $answers[$rule->gejala_id];
+                    
+                    // Hitung CF Pakar dikalikan CF User
+                    $cfE = ($rule->mb - $rule->md) * $cfUser; 
 
-                    // 5. MENGGABUNGKAN CF (Kombinasi jika ada >1 gejala yang mengarah pada satu penyakit yang sama)
                     if ($isFirst) {
-                        // Jika ini gejala pertama yang cocok, jadikan nilai CF awal
                         $cfCombine = $cfE;
                         $isFirst = false;
                     } else {
-                        // 6. RUMUS CF COMBINE: CF_Lama + (CF_Baru * (1 - CF_Lama))
                         $cfCombine = $cfCombine + ($cfE * (1 - $cfCombine));
                     }
                 }
             }
-            // Simpan hasil CF kombinasi penyakit tersebut ke dalam array
             if ($cfCombine > 0) $hasilPerJenis[$jenis->id] = $cfCombine;
         }
 
-        // --- SKENARIO TIDAK TERDIAGNOSA (CF Kosong / Gejala Acak) ---
         if (empty($hasilPerJenis)) {
             session()->forget('konsultasi_answers');
             return redirect()->route('konsultasi.index')->with('tidak_terdeteksi', 
             'Berdasarkan Konsultasi yang dilakukan oleh pasien, pasien tidak terdeteksi memiliki risiko terhadap kanker serviks.');
         }
 
-        // --- TAHAP RESOLUSI KONFLIK (NILAI SAMA) ---
         $cfTertinggi = max($hasilPerJenis);
         $kandidatPenyakit = array_keys($hasilPerJenis, $cfTertinggi);
         $idTerpilih = $kandidatPenyakit[0];
 
-        // Jika ada nilai CF yang sama, gunakan kepadatan Matching Rule
         if (count($kandidatPenyakit) > 1) {
             $skorMatching = [];
             foreach ($kandidatPenyakit as $jenisId) {
@@ -180,10 +177,9 @@ class KonsultasiController extends Controller {
             $matchingTertinggi = max($skorMatching);
             $kandidatBerdasarkanMatching = array_keys($skorMatching, $matchingTertinggi);
             
-            $idTerpilih = $kandidatBerdasarkanMatching[0]; // Ambil yang persentasenya paling tinggi
+            $idTerpilih = $kandidatBerdasarkanMatching[0]; 
         }
 
-        // --- TAHAP SIMPAN HASIL ---
         $hasil = HasilKonsultasi::create([
             'user_id' => Auth::id(),
             'jenis_id' => $idTerpilih,
@@ -196,15 +192,15 @@ class KonsultasiController extends Controller {
                 'user_id' => Auth::id(),
                 'hasil_konsultasi_id' => $hasil->id,
                 'gejala_id' => $gejalaId,
-                'nilai_cf_user' => 1 // Selalu 1 karena pasien menjawab YA
+                // Simpan CF User yang dipilih ke dalam database
+                'nilai_cf_user' => $answers[$gejalaId] 
             ]);
         }
 
-        session()->forget('konsultasi_answers'); // Bersihkan sesi agar bisa konsultasi lagi
+        session()->forget('konsultasi_answers'); 
         return redirect()->route('konsultasi.hasil', $hasil->id);
     }
 
-    // Tambahkan fungsi hapus untuk Admin
     public function destroy($id) {
         if (Auth::user()->role !== 'admin') return abort(403);
         HasilKonsultasi::findOrFail($id)->delete();
@@ -213,7 +209,6 @@ class KonsultasiController extends Controller {
 
     public function show($id) {
         $hasil = HasilKonsultasi::with(['user', 'jenis'])->findOrFail($id);
-        // Pastikan memanggil relasi gejala melalui tabel konsultasi
         $gejalaTerpilih = Konsultasi::with('gejala')->where('hasil_konsultasi_id', $hasil->id)->get();
         return view('konsultasi.hasil', compact('hasil', 'gejalaTerpilih'));
     }
@@ -222,7 +217,6 @@ class KonsultasiController extends Controller {
         $hasil = HasilKonsultasi::with(['user', 'jenis'])->findOrFail($id);
         $gejalaTerpilih = Konsultasi::with('gejala')->where('hasil_konsultasi_id', $hasil->id)->get();
         
-        // Tambahkan setPaper untuk stabilitas DomPDF
         $pdf = Pdf::loadView('konsultasi.cetak', compact('hasil', 'gejalaTerpilih'))
                 ->setPaper('a4', 'portrait'); 
                 
@@ -230,7 +224,6 @@ class KonsultasiController extends Controller {
     }
 
     public function cetakSemua() {
-        // Pastikan memanggil relasi dengan benar
         $riwayat = HasilKonsultasi::with(['user', 'jenis'])->latest();
         if (Auth::user()->role !== 'admin') {
             $riwayat->where('user_id', Auth::id());
@@ -243,7 +236,6 @@ class KonsultasiController extends Controller {
 
     public function riwayat() {
         $query = HasilKonsultasi::with(['user', 'jenis'])->latest();
-        // Jika bukan admin, hanya lihat milik sendiri
         if (Auth::user()->role !== 'admin') {
             $query->where('user_id', Auth::id());
         }

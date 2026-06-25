@@ -33,6 +33,8 @@ Route::middleware('auth')->group(function() {
     Route::get('/konsultasi/proses', [KonsultasiController::class, 'prosesDiagnosa'])->name('konsultasi.proses');
     Route::get('/konsultasi/hasil/{id}', [KonsultasiController::class, 'show'])->name('konsultasi.hasil');
     Route::get('/riwayat', [KonsultasiController::class, 'riwayat'])->name('riwayat');
+    // ---> TAMBAHKAN KODE INI UNTUK FITUR KEMBALI <---
+    Route::get('/konsultasi/kembali', [KonsultasiController::class, 'kembali'])->name('konsultasi.kembali');
 
     // Tambahkan rute Cetak PDF di sini agar bisa diakses Pasien & Admin
     Route::get('/konsultasi/cetak/{id}', [KonsultasiController::class, 'cetakPdf'])->name('konsultasi.cetak');
